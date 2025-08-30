@@ -4,7 +4,8 @@ export default function Navbar() {
   const location = useLocation();
 
   if (location.pathname === "/register" || location.pathname === "/login" || 
-    location.pathname === "/summarize" || location.pathname === "/categories" || location.pathname === "/dashboard" ) {
+    location.pathname === "/summarize" || location.pathname === "/categories" ||
+     location.pathname === "/dashboard" || location.pathname === "/saved-summaries" || location.pathname === "/profile-settings") {
   return null;
 }
 

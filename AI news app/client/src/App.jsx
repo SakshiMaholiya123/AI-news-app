@@ -6,7 +6,8 @@ import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Categories from "./pages/Categories"; 
-// import SavedSummaries from "./pages/SavedSummaries";  
+ import SavedSummaries from "./pages/SavedSummaries";  
+ import ProfileSettings from "./pages/ProfileSettings";
 
 
 function App() {
@@ -20,7 +21,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/categories" element={<Categories />} />
-        {/* <Route path="/saved" element={<SavedSummaries />} /> */}
+        <Route path="/saved-summaries" element={<SavedSummaries />} />
+        <Route path="/profile-settings" element={<ProfileSettings />} />
       </Routes>
     </Router>
   );

@@ -14,9 +14,12 @@ export default function Login() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
           {/* Heading */}
-          <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">
-            User Login
+          <h2 className="text-3xl font-bold text-center text-indigo-700 mb-2">
+            Login
           </h2>
+          <p className="text-center text-gray-500 mb-6 text-sm">
+            Access your account securely and continue where you left off.
+          </p>
 
           {/* Form */}
           <form className="space-y-5">

@@ -1,47 +1,59 @@
 import React, { useState, useEffect } from "react";
 import SummaryCard from "../components/SummaryCard";
 import axios from "axios";
-import { PlusCircle, BookOpen, FolderOpen, LogOut } from "lucide-react";
+import { PlusCircle, BookOpen, FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const [summaries, setSummaries] = useState([]);
-  const [user, setUser] = useState({ name: "User" });
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch user details (replace with your API /auth/me or similar)
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    // ✅ Try to get user from localStorage first
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+
+    // Fetch user from backend (optional, to keep data fresh)
     const fetchUser = async () => {
       try {
         const { data } = await axios.get("/api/auth/me", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setUser(data);
       } catch (err) {
         console.error("Error fetching user:", err);
+        localStorage.removeItem("token");
+        navigate("/login");
       }
     };
 
-    // Fetch saved summaries
+    fetchUser();
+
+    // Fetch summaries
     const fetchSummaries = async () => {
       try {
         const { data } = await axios.get("/api/summaries", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
-        if (Array.isArray(data)) {
-          setSummaries(data);
-        } else {
-          setSummaries([]);
-        }
+        setSummaries(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching summaries:", err);
         setSummaries([]);
       }
     };
 
-    fetchUser();
     fetchSummaries();
-  }, []);
+  }, [navigate]);
 
   const handleDelete = async (id) => {
     try {
@@ -56,12 +68,13 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user"); // ✅ also remove stored user
     navigate("/login");
   };
 
-  // Stats Calculation
+  // Stats
   const totalSummaries = summaries.length;
-  const categories = 5; // static for now
+  const categories = 5; // static
   const thisWeek = summaries.filter((s) => {
     const createdAt = new Date(s.createdAt);
     const oneWeekAgo = new Date();
@@ -126,7 +139,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Stats Section */}
+      {/* Stats */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Your Stats</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -149,18 +162,15 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Logout Button at Bottom-Left */}
-      {/* Logout Button (Bottom Left) */}
-<div className="fixed bottom-6 left-6">
-  <button
-    onClick={handleLogout}
-    className="bg-indigo-700 text-white px-4 py-2 rounded-lg hover:bg-indigo-800 transition"
-  >
-    Logout
-  </button>
-</div>
-
-
+      {/* Logout Button */}
+      <div className="fixed bottom-6 left-6">
+        <button
+          onClick={handleLogout}
+          className="bg-indigo-700 text-white px-4 py-2 rounded-lg hover:bg-indigo-800 transition"
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 // src/pages/Categories.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 const categories = [
   { id: 1, name: "Technology", icon: "💻" },
@@ -10,17 +11,34 @@ const categories = [
   { id: 6, name: "Entertainment", icon: "🎬" },
 ];
 
-const dummyNews = {
-  Technology: ["AI is revolutionizing software development.", "Quantum computing making progress."],
-  Politics: ["Elections expected next month.", "New policies introduced in parliament."],
-  Sports: ["Team India wins the final!", "Olympics preparation in full swing."],
-  Business: ["Stock market hits all-time high.", "Startups raise record funding."],
-  Health: ["New vaccine trials show positive results.", "Tips to improve mental health."],
-  Entertainment: ["New blockbuster movie released.", "Famous singer announces world tour."],
-};
-
 export default function Categories() {
   const [selected, setSelected] = useState(null);
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch news when category is selected
+  useEffect(() => {
+    if (!selected) return;
+
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { data } = await axios.get(
+          `http://localhost:5000/api/news?category=${selected}`
+        );
+        setNews(data); // assuming backend returns an array
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load news.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, [selected]);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
@@ -48,16 +66,32 @@ export default function Categories() {
       {/* Selected Category News */}
       {selected && (
         <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-md border border-gray-200">
-          <h2 className="text-2xl font-bold mb-4 text-indigo-700">{selected} News</h2>
-          <ul className="list-disc list-inside space-y-2">
-            {dummyNews[selected].map((news, i) => (
-              <li key={i} className="text-gray-700">
-                {news}
-              </li>
-            ))}
-          </ul>
+          <h2 className="text-2xl font-bold mb-4 text-indigo-700">
+            {selected} News
+          </h2>
+
+          {loading && <p className="text-gray-500">Loading news...</p>}
+          {error && <p className="text-red-500">{error}</p>}
+
+          {!loading && !error && (
+            <ul className="list-disc list-inside space-y-2">
+              {news.length > 0 ? (
+                news.map((item, i) => (
+                  <li key={i} className="text-gray-700">
+                    {item.title || item} {/* handle string or object */}
+                  </li>
+                ))
+              ) : (
+                <p className="text-gray-500">No news available.</p>
+              )}
+            </ul>
+          )}
+
           <button
-            onClick={() => setSelected(null)}
+            onClick={() => {
+              setSelected(null);
+              setNews([]);
+            }}
             className="mt-6 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
           >
             Back to Categories

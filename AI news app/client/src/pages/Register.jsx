@@ -1,10 +1,12 @@
 // src/pages/Register.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { User, Mail, Lock } from "lucide-react"; // Import icons
-import registerImg from "../assets/register.png"; // Your illustration
+import { Link, useNavigate } from "react-router-dom";
+import { User, Mail, Lock } from "lucide-react";
+import registerImg from "../assets/register.png";
 
 export default function Register() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -12,18 +14,53 @@ export default function Register() {
     confirmPassword: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    console.log("Register Data:", formData);
-    // Later connect to backend API
+
+    try {
+      setLoading(true);
+
+      const res = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Registration failed");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Save token & user info to localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // ✅ Redirect to dashboard
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Error during registration:", err);
+      alert("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -100,9 +137,10 @@ export default function Register() {
             {/* Register Button */}
             <button
               type="submit"
-              className="w-full bg-indigo-700 text-white py-2 rounded-lg hover:bg-indigo-800 transition"
+              disabled={loading}
+              className="w-full bg-indigo-700 text-white py-2 rounded-lg hover:bg-indigo-800 transition disabled:opacity-50"
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </button>
           </form>
 

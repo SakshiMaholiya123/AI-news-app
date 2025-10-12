@@ -3,12 +3,12 @@ import { Link, useLocation } from "react-router-dom";
 export default function Navbar() {
   const location = useLocation();
 
-  if (location.pathname === "/register" || location.pathname === "/login" || 
-    location.pathname === "/summarize" || location.pathname === "/categories" ||
-     location.pathname === "/dashboard" || location.pathname === "/saved-summaries" || location.pathname === "/profile-settings") {
-  return null;
-}
+  // Routes where Navbar should be hidden
+  const hiddenRoutes = [ "/register", "/login", "/summarize", "/categories", "/dashboard", "/saved-summaries", "/profile-settings" ];
 
+  if (hiddenRoutes.includes(location.pathname)) {
+    return null;
+  }
 
   return (
     <nav className="w-full bg-white shadow-sm">

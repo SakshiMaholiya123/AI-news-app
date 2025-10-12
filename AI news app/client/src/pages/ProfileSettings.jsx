@@ -1,5 +1,5 @@
-// pages/ProfileSettings.jsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 
 export default function ProfileSettings() {
   const [form, setForm] = useState({
@@ -13,6 +13,31 @@ export default function ProfileSettings() {
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState(null);
   const fileInputRef = useRef(null);
+
+  // 🔹 Load user profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data } = await axios.get("/api/users/profile", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setForm({
+          fullName: data.fullName || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          bio: data.bio || "",
+        });
+        if (data.avatarUrl) {
+          setAvatar({ file: null, preview: data.avatarUrl });
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -39,6 +64,7 @@ export default function ProfileSettings() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
     if (!form.fullName.trim()) {
       setSavedMessage({ type: "error", text: "Full name cannot be empty." });
       return;
@@ -51,10 +77,45 @@ export default function ProfileSettings() {
     setSaving(true);
     setSavedMessage(null);
 
-    await new Promise((res) => setTimeout(res, 800));
+    try {
+      let response;
+      if (avatar.file) {
+        // If updating avatar too, send FormData
+        const formData = new FormData();
+        formData.append("fullName", form.fullName);
+        formData.append("email", form.email);
+        formData.append("phone", form.phone);
+        formData.append("bio", form.bio);
+        formData.append("avatar", avatar.file);
+
+        response = await axios.put("/api/users/profile", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+      } else {
+        // Normal JSON request
+        response = await axios.put("/api/users/profile", form, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+      }
+
+      setSavedMessage({ type: "success", text: "Profile saved successfully." });
+      setForm({
+        fullName: response.data.fullName,
+        email: response.data.email,
+        phone: response.data.phone,
+        bio: response.data.bio,
+      });
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      setSavedMessage({ type: "error", text: "Failed to save profile." });
+    }
 
     setSaving(false);
-    setSavedMessage({ type: "success", text: "Profile saved successfully." });
     setTimeout(() => setSavedMessage(null), 3500);
   }
 

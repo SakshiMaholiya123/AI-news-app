@@ -1,4 +1,3 @@
-// src/pages/SummarizerPage.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import SummaryCard from "../components/SummaryCard";
@@ -14,15 +13,41 @@ export default function SummarizerPage() {
       setError("⚠️ Please paste some text or a valid URL.");
       return;
     }
+
     setError("");
     setLoading(true);
+
     try {
-      const { data } = await axios.post("/api/summarize", { text: input });
-      setSummary({ _id: Date.now(), text: data.summary });
+      // 1️⃣ Call summarization API
+      const token = localStorage.getItem("token");
+      const { data } = await axios.post(
+        "http://localhost:5000/api/summarize", // ✅ adjust if proxy is not set
+        { text: input },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const newSummary = { _id: Date.now(), text: data.summary };
+      setSummary(newSummary);
+
+      // 2️⃣ Save summary into user’s saved list
+      await axios.post(
+        "http://localhost:5000/api/summaries",
+        { text: data.summary },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
     } catch (err) {
       console.error(err);
       setError("❌ Something went wrong! Please try again.");
     }
+
     setLoading(false);
   };
 
@@ -49,7 +74,7 @@ export default function SummarizerPage() {
           className={`mt-4 w-full py-3 rounded-xl font-semibold transition ${
             loading
               ? "bg-indigo-700 cursor-not-allowed text-white"
-              : "bg-indigo-700 hover:bg-indigo-700 text-white"
+              : "bg-indigo-700 hover:bg-indigo-800 text-white"
           }`}
           onClick={handleSummarize}
           disabled={loading}

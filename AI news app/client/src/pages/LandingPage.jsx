@@ -1,7 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function LandingPage() {
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/summarize"); // logged in → go to summarize
+    } else {
+      navigate("/login"); // not logged in → go to login
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Main Content */}
@@ -13,12 +24,12 @@ export default function LandingPage() {
           Paste news articles, enter URLs, or upload documents — and let AI give you 
           a clear, concise summary instantly.
         </p>
-        <Link
-          to="/summarize"
+        <button
+          onClick={handleGetStarted}
           className="bg-indigo-700 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-indigo-800 transition"
         >
           Get Started
-        </Link>
+        </button>
 
         {/* Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mt-10">

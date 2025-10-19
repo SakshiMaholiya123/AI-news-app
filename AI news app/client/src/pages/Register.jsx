@@ -44,20 +44,21 @@ export default function Register() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Registration failed");
-        setLoading(false);
+        alert(data.message || "Registration failed. Try again!");
         return;
       }
 
-      // ✅ Save token & user info to localStorage
+      // ✅ Save token and user info locally
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+
+      alert("Account created successfully! 🎉");
 
       // ✅ Redirect to dashboard
       navigate("/dashboard");
     } catch (err) {
       console.error("Error during registration:", err);
-      alert("Something went wrong. Try again.");
+      alert("Something went wrong. Please try again later.");
     } finally {
       setLoading(false);
     }

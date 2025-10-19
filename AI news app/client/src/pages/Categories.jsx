@@ -1,4 +1,3 @@
-// src/pages/Categories.jsx
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -17,7 +16,6 @@ export default function Categories() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch news when category is selected
   useEffect(() => {
     if (!selected) return;
 
@@ -25,13 +23,25 @@ export default function Categories() {
       try {
         setLoading(true);
         setError(null);
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Please login first to view news.");
+          return;
+        }
+
         const { data } = await axios.get(
-          `http://localhost:5000/api/news?category=${selected}`
+          `http://localhost:5000/api/news?category=${selected}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
-        setNews(data); // assuming backend returns an array
+
+        // ✅ Expecting backend to return an array of news articles
+        setNews(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(err);
-        setError("Failed to load news.");
+        console.error("❌ Error fetching news:", err);
+        setError("Failed to load news. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -46,7 +56,7 @@ export default function Categories() {
         Browse News by Category
       </h1>
 
-      {/* Categories Grid */}
+      {/* ✅ Categories Grid */}
       {!selected && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {categories.map((cat) => (
@@ -63,7 +73,7 @@ export default function Categories() {
         </div>
       )}
 
-      {/* Selected Category News */}
+      {/* ✅ Selected Category News */}
       {selected && (
         <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-md border border-gray-200">
           <h2 className="text-2xl font-bold mb-4 text-indigo-700">
@@ -78,7 +88,8 @@ export default function Categories() {
               {news.length > 0 ? (
                 news.map((item, i) => (
                   <li key={i} className="text-gray-700">
-                    {item.title || item} {/* handle string or object */}
+                    {item.title || item?.headline || item}{" "}
+                    {/* ✅ Handle object or string */}
                   </li>
                 ))
               ) : (

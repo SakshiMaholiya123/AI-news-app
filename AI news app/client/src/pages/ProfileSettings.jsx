@@ -14,11 +14,11 @@ export default function ProfileSettings() {
   const [savedMessage, setSavedMessage] = useState(null);
   const fileInputRef = useRef(null);
 
-  // 🔹 Load user profile on mount
+  // ✅ Fetch user profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data } = await axios.get("/api/users/profile", {
+        const { data } = await axios.get("http://localhost:5000/api/profile", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -33,17 +33,19 @@ export default function ProfileSettings() {
           setAvatar({ file: null, preview: data.avatarUrl });
         }
       } catch (err) {
-        console.error("Error fetching profile:", err);
+        console.error("❌ Error fetching profile:", err);
       }
     };
     fetchProfile();
   }, []);
 
+  // ✅ Handle input change
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  // ✅ Handle avatar upload
   function handleAvatarChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -62,15 +64,11 @@ export default function ProfileSettings() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  // ✅ Save profile
   async function handleSubmit(e) {
     e.preventDefault();
-
     if (!form.fullName.trim()) {
       setSavedMessage({ type: "error", text: "Full name cannot be empty." });
-      return;
-    }
-    if (!/^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/.test(form.email)) {
-      setSavedMessage({ type: "error", text: "Please enter a valid email address." });
       return;
     }
 
@@ -80,7 +78,6 @@ export default function ProfileSettings() {
     try {
       let response;
       if (avatar.file) {
-        // If updating avatar too, send FormData
         const formData = new FormData();
         formData.append("fullName", form.fullName);
         formData.append("email", form.email);
@@ -88,15 +85,14 @@ export default function ProfileSettings() {
         formData.append("bio", form.bio);
         formData.append("avatar", avatar.file);
 
-        response = await axios.put("/api/users/profile", formData, {
+        response = await axios.put("http://localhost:5000/api/profile", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
       } else {
-        // Normal JSON request
-        response = await axios.put("/api/users/profile", form, {
+        response = await axios.put("http://localhost:5000/api/profile", form, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -111,7 +107,7 @@ export default function ProfileSettings() {
         bio: response.data.bio,
       });
     } catch (err) {
-      console.error("Error saving profile:", err);
+      console.error("❌ Error saving profile:", err);
       setSavedMessage({ type: "error", text: "Failed to save profile." });
     }
 
@@ -133,11 +129,7 @@ export default function ProfileSettings() {
             <div className="col-span-1 flex flex-col items-center md:items-start">
               <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
                 {avatar.preview ? (
-                  <img
-                    src={avatar.preview}
-                    alt="avatar preview"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={avatar.preview} alt="avatar preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-slate-400">No Photo</div>
                 )}
@@ -154,9 +146,7 @@ export default function ProfileSettings() {
                   />
                   <button
                     type="button"
-                    onClick={() =>
-                      fileInputRef.current && fileInputRef.current.click()
-                    }
+                    onClick={() => fileInputRef.current?.click()}
                     className="px-3 py-2 rounded-lg border border-indigo-700 text-sm text-indigo-700 hover:bg-indigo-700 hover:text-white transition"
                   >
                     Upload
@@ -174,18 +164,14 @@ export default function ProfileSettings() {
                 )}
               </div>
 
-              <p className="text-xs text-slate-400 mt-3">
-                PNG, JPG or WEBP. Max 5MB.
-              </p>
+              <p className="text-xs text-slate-400 mt-3">PNG, JPG or WEBP. Max 5MB.</p>
             </div>
 
             {/* Form Inputs */}
             <div className="col-span-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">
-                    Full name
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700">Full name</label>
                   <input
                     name="fullName"
                     value={form.fullName}
@@ -196,9 +182,7 @@ export default function ProfileSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">
-                    Email
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700">Email</label>
                   <input
                     name="email"
                     value={form.email}
@@ -209,9 +193,7 @@ export default function ProfileSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">
-                    Phone
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700">Phone</label>
                   <input
                     name="phone"
                     value={form.phone}
@@ -223,9 +205,7 @@ export default function ProfileSettings() {
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm font-medium text-slate-700">
-                  Bio
-                </label>
+                <label className="block text-sm font-medium text-slate-700">Bio</label>
                 <textarea
                   name="bio"
                   value={form.bio}
@@ -238,7 +218,6 @@ export default function ProfileSettings() {
             </div>
           </section>
 
-          {/* Save Button */}
           <div className="flex justify-end">
             <button
               type="submit"
@@ -249,13 +228,10 @@ export default function ProfileSettings() {
             </button>
           </div>
 
-          {/* Message */}
           {savedMessage && (
             <p
               className={`text-sm mt-2 ${
-                savedMessage.type === "success"
-                  ? "text-green-600"
-                  : "text-red-600"
+                savedMessage.type === "success" ? "text-green-600" : "text-red-600"
               }`}
             >
               {savedMessage.text}

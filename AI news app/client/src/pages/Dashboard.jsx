@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 export default function Dashboard() {
   const [summaries, setSummaries] = useState([]);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,64 +18,74 @@ export default function Dashboard() {
       return;
     }
 
-    // ✅ Try to get user from localStorage first
+    // ✅ Load user from localStorage first
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
 
-    // Fetch user from backend (optional, to keep data fresh)
+    // ✅ Fetch latest user info from backend
     const fetchUser = async () => {
       try {
-        const { data } = await axios.get("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await axios.get(
+          "http://localhost:5000/api/auth/me",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setUser(data);
       } catch (err) {
-        console.error("Error fetching user:", err);
+        console.error("❌ Error fetching user:", err);
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         navigate("/login");
       }
     };
 
-    fetchUser();
-
-    // Fetch summaries
+    // ✅ Fetch all summaries
     const fetchSummaries = async () => {
       try {
-        const { data } = await axios.get("/api/summaries", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await axios.get(
+          "http://localhost:5000/api/summaries",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setSummaries(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Error fetching summaries:", err);
+        console.error("❌ Error fetching summaries:", err);
         setSummaries([]);
+      } finally {
+        setLoading(false);
       }
     };
 
+    fetchUser();
     fetchSummaries();
   }, [navigate]);
 
+  // ✅ Delete summary
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/summaries/${id}`, {
+      await axios.delete(`http://localhost:5000/api/summaries/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setSummaries((prev) => prev.filter((s) => s._id !== id));
     } catch (err) {
-      console.error("Error deleting summary:", err);
+      console.error("❌ Error deleting summary:", err);
     }
   };
 
+  // ✅ Logout user
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user"); // ✅ also remove stored user
+    localStorage.removeItem("user");
     navigate("/login");
   };
 
-  // Stats
+  // ✅ Stats
   const totalSummaries = summaries.length;
-  const categories = 5; // static
+  const categories = 5; // static example
   const thisWeek = summaries.filter((s) => {
     const createdAt = new Date(s.createdAt);
     const oneWeekAgo = new Date();
@@ -83,9 +94,17 @@ export default function Dashboard() {
   }).length;
   const minutesSaved = totalSummaries * 5;
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-indigo-700 text-xl font-semibold">
+        Loading dashboard...
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8 relative">
-      {/* Welcome Banner */}
+      {/* ✅ Welcome Banner */}
       <div className="bg-indigo-700 text-white p-6 rounded-2xl shadow-md">
         <h1 className="text-2xl font-bold">
           Welcome back, {user?.name || "User"} 👋
@@ -95,7 +114,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Quick Actions */}
+      {/* ✅ Quick Actions */}
       <div>
         <h2 className="text-xl font-semibold mb-3">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -106,6 +125,7 @@ export default function Dashboard() {
             <PlusCircle size={32} className="text-indigo-700 mb-2" />
             <p className="font-medium">Summarize New</p>
           </div>
+
           <div
             onClick={() => navigate("/saved")}
             className="p-5 bg-white shadow rounded-2xl flex flex-col items-center cursor-pointer hover:shadow-lg transition hover:bg-indigo-50"
@@ -113,6 +133,7 @@ export default function Dashboard() {
             <BookOpen size={32} className="text-green-600 mb-2" />
             <p className="font-medium">Saved Summaries</p>
           </div>
+
           <div
             onClick={() => navigate("/categories")}
             className="p-5 bg-white shadow rounded-2xl flex flex-col items-center cursor-pointer hover:shadow-lg transition hover:bg-indigo-50"
@@ -123,7 +144,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* ✅ Recent Activity */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Recent Summaries</h2>
         {summaries.length === 0 ? (
@@ -139,7 +160,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Stats */}
+      {/* ✅ Stats Section */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Your Stats</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -162,7 +183,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Logout Button */}
+      {/* ✅ Logout Button */}
       <div className="fixed bottom-6 left-6">
         <button
           onClick={handleLogout}

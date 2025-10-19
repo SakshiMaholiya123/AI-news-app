@@ -33,19 +33,21 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Login failed");
-        setLoading(false);
+        alert(data.message || "Invalid credentials");
         return;
       }
 
-      // ✅ Save token
+      // ✅ Store token and user info in localStorage
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      // ✅ Redirect to dashboard
+      alert("Login successful! 🎉");
+
+      // ✅ Redirect after successful login
       navigate("/dashboard");
     } catch (err) {
       console.error("Error during login:", err);
-      alert("Something went wrong. Try again.");
+      alert("Something went wrong. Please try again later.");
     } finally {
       setLoading(false);
     }

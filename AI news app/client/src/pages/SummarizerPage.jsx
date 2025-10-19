@@ -7,6 +7,7 @@ export default function SummarizerPage() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleSummarize = async () => {
     if (!input.trim()) {
@@ -14,46 +15,59 @@ export default function SummarizerPage() {
       return;
     }
 
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("⚠️ Please log in to use the summarizer.");
+      return;
+    }
+
     setError("");
+    setSuccessMsg("");
     setLoading(true);
 
     try {
-      // 1️⃣ Call summarization API
-      const token = localStorage.getItem("token");
-      const { data } = await axios.post(
-        "http://localhost:5000/api/summarize", // ✅ adjust if proxy is not set
+      // 1️⃣ Call AI Summarization API
+      const res = await axios.post(
+        "http://localhost:5000/api/summarize",
         { text: input },
         {
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      const newSummary = { _id: Date.now(), text: data.summary };
+      const aiSummary = res.data.summary || res.data.result || "";
+      const newSummary = { _id: Date.now(), text: aiSummary };
       setSummary(newSummary);
 
-      // 2️⃣ Save summary into user’s saved list
+      // 2️⃣ Save summary to user’s account
       await axios.post(
         "http://localhost:5000/api/summaries",
-        { text: data.summary },
+        { originalText: input, text: aiSummary },
         {
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
       );
+
+      setSuccessMsg("✅ Summary saved successfully!");
     } catch (err) {
       console.error(err);
-      setError("❌ Something went wrong! Please try again.");
+      setError(
+        err.response?.data?.message ||
+          "❌ Something went wrong! Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-50 py-10 px-4">
-      {/* Heading */}
       <h2 className="text-3xl font-bold mb-3 text-indigo-700 text-center">
         Summarize News Instantly
       </h2>
@@ -61,7 +75,6 @@ export default function SummarizerPage() {
         Paste any news article text or link below and get a concise AI-powered summary.
       </p>
 
-      {/* Input Box */}
       <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 w-full max-w-2xl">
         <textarea
           className="w-full p-4 border rounded-xl h-40 resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -70,6 +83,8 @@ export default function SummarizerPage() {
           onChange={(e) => setInput(e.target.value)}
         />
         {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
+        {successMsg && <p className="text-green-600 mt-2 text-sm">{successMsg}</p>}
+
         <button
           className={`mt-4 w-full py-3 rounded-xl font-semibold transition ${
             loading
@@ -83,7 +98,6 @@ export default function SummarizerPage() {
         </button>
       </div>
 
-      {/* Summary Result */}
       {summary && (
         <div className="mt-8 w-full max-w-2xl">
           <h3 className="text-xl font-semibold text-indigo-700 mb-3">

@@ -11,42 +11,42 @@ import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import summaryRoutes from "./routes/summaryRoutes.js";
 import newsRoutes from "./routes/newsRoutes.js";
-
-// Controller
-import { summarizeText } from "./controllers/aiController.js";
+import aiRoutes from "./routes/aiRoutes.js"; // ✅ new import
 
 dotenv.config();
 
 // Initialize app
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
 // Connect MongoDB
 connectDB();
 
-// Setup path variables for static uploads
+// Setup static file path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Static folder for uploaded files
+// Serve uploaded files statically
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
-// API Routes
+// ========================
+// ✅ API ROUTES
+// ========================
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/summaries", summaryRoutes);
+app.use("/api/summary", summaryRoutes); // ✅ renamed from summaries
 app.use("/api/news", newsRoutes);
-
-// Public AI summarization endpoint
-app.post("/api/summarize", summarizeText);
+app.use("/api", aiRoutes); // ✅ now summarization handled separately
 
 // Root route
 app.get("/", (req, res) => {
   res.send("🚀 AI News Summarizer Backend is running...");
 });
 
-// Error handler middleware
+// Error Handler
 app.use(errorHandler);
 
 // Start server

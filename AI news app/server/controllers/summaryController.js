@@ -1,59 +1,44 @@
-// controllers/summaryController.js
 import Summary from "../models/Summary.js";
 
-export const createSummary = async (req, res, next) => {
+// ✅ Create a new summary record
+export const createSummary = async (req, res) => {
   try {
-    const { originalText, text } = req.body;
-
-    if (!text?.trim()) {
-      return res.status(400).json({ message: "Summary text is required" });
-    }
-
-    const newSummary = await Summary.create({
-      user: req.user._id,
-      originalText: originalText?.trim() || "",
-      text: text.trim(),
+    const { text, summary } = req.body;
+    const newSummary = new Summary({
+      user: req.user.id,
+      text,
+      summary,
     });
-
-    return res.status(201).json(newSummary);
-  } catch (err) {
-    next(err);
+    const saved = await newSummary.save();
+    res.status(201).json(saved);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating summary", error });
   }
 };
 
-
-// ✅ Get all summaries for current user (protected)
-export const getUserSummaries = async (req, res, next) => {
+// ✅ Get all summaries for user
+export const getSummaries = async (req, res) => {
   try {
-    const summaries = await Summary.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .lean(); // ⚡ lean() → better performance, returns plain JS objects
-
-    return res.json(summaries);
-  } catch (err) {
-    next(err);
+    const summaries = await Summary.find({ user: req.user.id });
+    res.json(summaries);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching summaries", error });
   }
 };
 
-// ✅ Delete a summary (protected)
-export const deleteSummary = async (req, res, next) => {
+// ✅ Delete one summary
+export const deleteSummary = async (req, res) => {
   try {
     const summary = await Summary.findById(req.params.id);
+    if (!summary) return res.status(404).json({ message: "Summary not found" });
 
-    if (!summary) {
-      return res.status(404).json({ message: "Summary not found" });
+    if (summary.user.toString() !== req.user.id) {
+      return res.status(401).json({ message: "Not authorized" });
     }
 
-    if (summary.user.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to delete this summary" });
-    }
-
-    await Summary.findByIdAndDelete(summary._id);
-
-    return res.json({ message: "Summary deleted successfully" });
-  } catch (err) {
-    next(err);
+    await summary.deleteOne();
+    res.json({ message: "Summary deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting summary", error });
   }
 };

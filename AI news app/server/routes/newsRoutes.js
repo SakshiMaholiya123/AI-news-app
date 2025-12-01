@@ -1,10 +1,10 @@
-// routes/newsRoutes.js
 import express from "express";
-import { getByCategory } from "../controllers/newsController.js";
+import { getNewsByCategory } from "../controllers/newsController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // GET /api/news?category=Technology
-router.get("/", getByCategory);
+router.get("/", protect, getNewsByCategory);
 
 export default router;

@@ -6,6 +6,11 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  phone: { type: String, default: "" },           // ✅ Added
+  bio: { type: String, default: "", maxLength: 200 }, // ✅ Added
+  avatar: { type: String, default: "" },          // ✅ Added
+}, {
+  timestamps: true  // ✅ Adds createdAt and updatedAt
 });
 
 // 🔒 Hash password before saving

@@ -1,20 +1,16 @@
 import express from "express";
-import {
-  getSummaries,
-  deleteSummary,
-  createSummary,
-} from "../controllers/summaryController.js";
+import { createSummary, getSummaries, deleteSummary } from "../controllers/summaryController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Create new summary (CRUD)
+// ✅ POST /api/summary - Create new summary
 router.post("/", protect, createSummary);
 
-// Get all summaries of logged-in user
+// ✅ GET /api/summary - Get all user summaries
 router.get("/", protect, getSummaries);
 
-// Delete a summary by ID
+// ✅ DELETE /api/summary/:id - Delete specific summary
 router.delete("/:id", protect, deleteSummary);
 
 export default router;

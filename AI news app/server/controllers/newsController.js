@@ -1,77 +1,63 @@
-  // controllers/newsController.js
-  import axios from "axios";
+import axios from "axios";
 
-  // ✅ Valid categories supported by NewsAPI
-  const VALID_CATEGORIES = [
-    "business",
-    "entertainment",
-    "general",
-    "health",
-    "science",
-    "sports",
-    "technology",
-  ];
+export const getNewsByCategory = async (req, res) => {
+  try {
+    const { category } = req.query;
 
-  // 📌 Get news by category
-  export const getByCategory = async (req, res, next) => {
-    try {
-      let category = req.query.category || "general";
+    if (!category) {
+      return res.status(400).json({ message: "Category is required" });
+    }
 
-      // fallback to "general" if invalid category is passed
-      if (!VALID_CATEGORIES.includes(category)) {
-        category = "general";
-      }
+    if (!process.env.GNEWS_API_KEY) {
+      return res.status(500).json({ message: "News API key not configured" });
+    }
 
-      const key = process.env.NEWS_API_KEY;
+    const categoryMap = {
+      Technology: "technology",
+      Politics: "nation",
+      Sports: "sports",
+      Business: "business",
+      Health: "health",
+      Entertainment: "entertainment",
+    };
 
-      if (key) {
-        const url = `https://newsapi.org/v2/top-headlines?category=${encodeURIComponent(
-          category
-        )}&pageSize=10&country=us&apiKey=${key}`;
+    const gnewsCategory = categoryMap[category] || "general";
 
-        const { data } = await axios.get(url);
+    console.log("Fetching news for category:", category);
 
-        // Ensure `articles` is always an array
-        const articles = Array.isArray(data?.articles) ? data.articles : [];
+    const response = await axios.get("https://gnews.io/api/v4/top-headlines", {
+      params: {
+        category: gnewsCategory,
+        lang: "en",
+        country: "in",
+        max: 10,
+        apikey: process.env.GNEWS_API_KEY,
+      },
+    });
 
-        // 📰 Map to a simplified shape
-        const mapped = articles.map((a) => ({
-          title: a.title || "No title",
-          description: a.description || "No description",
-          url: a.url || "#",
-          source: a.source?.name || "Unknown",
-          publishedAt: a.publishedAt || null,
-          image: a.urlToImage || null,
-        }));
+    const articles = response.data.articles.map((article) => ({
+      title: article.title,
+      description: article.description,
+      url: article.url,
+      image: article.image,
+      publishedAt: article.publishedAt,
+      source: article.source.name,
+    }));
 
-        return res.json(mapped);
-      } else {
-        // 🔄 Fallback dummy data if NEWS_API_KEY is not set
-        const dummy = [
-          {
-            title: "AI transforms industry",
-            description: "AI is being used widely...",
-            url: "#",
-            source: "Demo",
-            publishedAt: new Date().toISOString(),
-            image: null,
-          },
-          {
-            title: "Market update",
-            description: "Markets went up today...",
-            url: "#",
-            source: "Demo",
-            publishedAt: new Date().toISOString(),
-            image: null,
-          },
-        ];
-        return res.json(dummy);
-      }
-    } catch (err) {
-      console.error("Error fetching news:", err.message);
-      return res.status(500).json({
-        message: "Failed to fetch news articles. Please try again later.",
-        error: err.message,
+    console.log(`Found ${articles.length} articles for category: ${category}`);
+    res.json(articles);
+  } catch (error) {
+    console.error("Error fetching news:", error.response?.data || error.message);
+
+    if (error.response?.status === 403) {
+      return res.status(403).json({
+        message: "API key invalid or rate limit exceeded",
       });
     }
-  };
+
+    res.status(500).json({
+      message: "Error fetching news",
+      error: error.message,
+    });
+  }
+};

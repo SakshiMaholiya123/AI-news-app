@@ -1,31 +1,36 @@
 import React, { useState } from "react";
-import { Clipboard, ClipboardCheck, Trash2 } from "lucide-react";
+import { Clipboard, ClipboardCheck, Trash2, Calendar } from "lucide-react";
 
 export default function SummaryCard({ summary, onDelete }) {
   const [copied, setCopied] = useState(false);
 
-  // ✅ Handle Copy
   const handleCopy = () => {
-    navigator.clipboard.writeText(summary.text);
+    navigator.clipboard.writeText(summary.summary || summary.text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
   return (
     <div className="bg-white shadow-lg rounded-2xl p-5 border border-gray-200 transition-all hover:shadow-xl">
-      {/* Title */}
-      <h3 className="font-semibold text-lg mb-3 text-indigo-600">
-        AI Summary
-      </h3>
+      {/* ✅ OPTION 1: Small timestamp instead of "AI Summary" */}
+      <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+        <Calendar className="w-3 h-3" />
+        <span>
+          {new Date(summary.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          })}
+        </span>
+      </div>
 
       {/* Summary Text */}
       <p className="text-gray-800 mb-5 leading-relaxed whitespace-pre-line break-words">
-        {summary.text}
+        {summary.summary || summary.text || "No summary available"}
       </p>
 
       {/* Buttons */}
       <div className="flex justify-end gap-3">
-        {/* Copy Button */}
         <button
           onClick={handleCopy}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition ${
@@ -45,7 +50,6 @@ export default function SummaryCard({ summary, onDelete }) {
           )}
         </button>
 
-        {/* Delete Button */}
         {onDelete && (
           <button
             onClick={() => onDelete(summary._id)}

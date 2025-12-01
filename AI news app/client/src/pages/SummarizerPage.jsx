@@ -26,9 +26,9 @@ export default function SummarizerPage() {
     setLoading(true);
 
     try {
-      // 1️⃣ Call AI Summarization API
+      // ✅ REQUEST 1: AI Summary Generation
       const res = await axios.post(
-        "http://localhost:5000/api/summarize",
+        "http://localhost:5000/api/ai",
         { text: input },
         {
           headers: {
@@ -38,27 +38,36 @@ export default function SummarizerPage() {
         }
       );
 
-      const aiSummary = res.data.summary || res.data.result || "";
+      const aiSummary = res.data.summary || "No summary generated.";
+
+      // Show immediately on UI
       const newSummary = { _id: Date.now(), text: aiSummary };
       setSummary(newSummary);
 
-      // 2️⃣ Save summary to user’s account
-      await axios.post(
-        "http://localhost:5000/api/summaries",
-        { originalText: input, text: aiSummary },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // ✅ REQUEST 2: Save Summary (DB) – UPDATED FIELDS
+      // REQUEST 2: Save Summary (DB)
+await axios.post(
+  "http://localhost:5000/api/summary",
+  {
+    originalText: input,   // article / input text
+    summary: aiSummary,    // generated summary text
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
+
 
       setSuccessMsg("✅ Summary saved successfully!");
     } catch (err) {
-      console.error(err);
+      console.error("SUMMARY ERROR:", err);
+
       setError(
         err.response?.data?.message ||
+          err.message ||
           "❌ Something went wrong! Please try again."
       );
     } finally {
@@ -82,6 +91,7 @@ export default function SummarizerPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
+
         {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
         {successMsg && <p className="text-green-600 mt-2 text-sm">{successMsg}</p>}
 

@@ -4,7 +4,7 @@ export default function Navbar() {
   const location = useLocation();
 
   // Routes where Navbar should be hidden
-  const hiddenRoutes = [ "/register", "/login", "/summarize", "/categories", "/dashboard", "/saved-summaries", "/profile-settings" ];
+  const hiddenRoutes = [ "/register", "/login", "/summarize", "/categories", "/dashboard", "/saved-summaries", "/profile-settings" , "/admin-security" ];
 
   if (hiddenRoutes.includes(location.pathname)) {
     return null;

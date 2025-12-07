@@ -2,15 +2,25 @@ import express from "express";
 import { createSummary, getSummaries, deleteSummary } from "../controllers/summaryController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
+// ⭐ NEW: Local request logger for summary API
+const summaryAPILogger = (req, res, next) => {
+  req.summaryApiRequest = true; // Flag for controllers
+  next();
+};
+
 const router = express.Router();
 
-// ✅ POST /api/summary - Create new summary
-router.post("/", protect, createSummary);
+// =============================
+// 🚀 SUMMARY ROUTES (SECURE)
+// =============================
 
-// ✅ GET /api/summary - Get all user summaries
-router.get("/", protect, getSummaries);
+// POST → Create Summary
+router.post("/", protect, summaryAPILogger, createSummary);
 
-// ✅ DELETE /api/summary/:id - Delete specific summary
-router.delete("/:id", protect, deleteSummary);
+// GET → Fetch User Summaries
+router.get("/", protect, summaryAPILogger, getSummaries);
+
+// DELETE → Delete Summary
+router.delete("/:id", protect, summaryAPILogger, deleteSummary);
 
 export default router;

@@ -216,6 +216,18 @@ export default function Dashboard() {
                   <span>Profile Settings</span>
                 </button>
 
+                {/* ⭐ NEW: Security Dashboard item */}
+                <button
+                  onClick={() => {
+                    navigate("/admin-security");
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 flex items-center gap-3 transition text-gray-700"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Security Dashboard</span>
+                </button>
+
                 <div className="border-t border-gray-200 my-1" />
 
                 <button
